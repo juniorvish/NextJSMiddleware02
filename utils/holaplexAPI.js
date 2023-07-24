@@ -3,20 +3,19 @@ import axios from 'axios';
 
 const holaplexHubAPI = axios.create({
   baseURL: 'https://holaplex.com/api',
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-export const checkUserNFTOwnership = async (userAddress, projectId, dropId) => {
+export const checkNFTOwnership = async (walletAddress, nftId) => {
   try {
-    const response = await holaplexHubAPI.get(`/nfts/${userAddress}`);
-    const userNFTs = response.data;
-
-    return userNFTs.some(nft => nft.projectId === projectId && nft.dropId === dropId);
+    const response = await holaplexHubAPI.get(`/nft/${nftId}/owner/${walletAddress}`);
+    return response.data;
   } catch (error) {
-    console.error('Error checking user NFT ownership:', error);
-    return false;
+    console.error(error);
+    return null;
   }
 };
 
