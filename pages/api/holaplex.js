@@ -1,24 +1,24 @@
 ```javascript
 import { NextApiRequest, NextApiResponse } from 'next';
-import { checkUserNFTOwnership } from '../../middleware/tokenGate';
+import { checkNFTOwnership } from '../../utils/holaplexAPI';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { userAddress } = req.body;
+  const { walletAddress, nftId } = req.body;
 
-  if (!userAddress) {
-    return res.status(400).json({ error: 'User address is required' });
+  if (!walletAddress || !nftId) {
+    return res.status(400).json({ error: 'Missing wallet address or NFT ID' });
   }
 
   try {
-    const ownsNFT = await checkUserNFTOwnership(userAddress);
+    const isOwner = await checkNFTOwnership(walletAddress, nftId);
 
-    if (ownsNFT) {
-      return res.status(200).json({ ownsNFT: true });
+    if (isOwner) {
+      return res.status(200).json({ status: 'Access granted' });
     } else {
-      return res.status(403).json({ ownsNFT: false });
+      return res.status(403).json({ status: 'Access denied' });
     }
   } catch (error) {
-    return res.status(500).json({ error: 'Error checking NFT ownership' });
+    return res.status(500).json({ error: 'Server error' });
   }
 }
 ```
