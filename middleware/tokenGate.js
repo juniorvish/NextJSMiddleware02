@@ -1,31 +1,26 @@
 ```javascript
-import { holaplexHubAPI } from '../utils/holaplexAPI';
-
-const projectSettings = {
-  // Add your project settings here
-};
-
-const dropSettings = {
-  // Add your drop settings here
-};
-
-const checkUserNFTOwnership = async (userAddress) => {
-  const userNFTs = await holaplexHubAPI.getNFTs(userAddress);
-  return userNFTs.some(nft => nft.project === projectSettings.project && nft.drop === dropSettings.drop);
-};
+import { holaplexAPI } from '../utils/holaplexAPI';
 
 const tokenGate = async (req, res, next) => {
-  const userAddress = req.headers['x-user-address'];
-  if (!userAddress) {
-    return res.status(401).json({ error: 'User address is required' });
-  }
+  const { user } = req;
+  const { projectSettings, dropSettings } = req.config;
 
-  const ownsNFT = await checkUserNFTOwnership(userAddress);
-  if (!ownsNFT) {
-    return res.status(403).json({ error: 'User does not own the required NFT' });
-  }
+  try {
+    const userNFTs = await holaplexAPI.getUserNFTs(user);
 
-  next();
+    const hasRequiredNFT = userNFTs.some(nft => 
+      nft.project === projectSettings && nft.drop === dropSettings
+    );
+
+    if (!hasRequiredNFT) {
+      return res.status(403).json({ error: 'Access denied. User does not own the required NFT.' });
+    }
+
+    next();
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'An error occurred while checking user NFT ownership.' });
+  }
 };
 
 export default tokenGate;
